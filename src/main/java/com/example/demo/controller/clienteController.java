@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.model.dto.ClienteDto;
 import com.example.demo.model.entity.Cliente;
+import com.example.demo.model.payload.MensajeResponse;
 import com.example.demo.service.ICliente;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -9,8 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -20,60 +19,103 @@ public class clienteController {
     private ICliente clienteService;
 
     @PostMapping("/cliente")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ClienteDto create(@RequestBody ClienteDto ClienteDto){
-      Cliente clienteSave =  clienteService.save(ClienteDto);
-        return ClienteDto.builder()
-                .idCliente(clienteSave.getIdCliente())
-                .nombre(clienteSave.getNombre())
-                .apellido(clienteSave.getApellido())
-                .correo(clienteSave.getCorreo())
-                .fechaRegistro(clienteSave.getFechaRegistro())
-                .build();
+    public ResponseEntity<?>  create(@RequestBody ClienteDto ClienteDto){
+        Cliente clienteSave = null;
+        try {
+            clienteSave = clienteService.save(ClienteDto);
+            return new ResponseEntity<>( MensajeResponse.builder()
+                            .mensaje("Guardado Correctamente")
+                            .object(ClienteDto.builder()
+                                    .idCliente(clienteSave.getIdCliente())
+                                    .nombre(clienteSave.getNombre())
+                                    .apellido(clienteSave.getApellido())
+                                    .correo(clienteSave.getCorreo())
+                                    .fechaRegistro(clienteSave.getFechaRegistro())
+                                    .build())
+                            .build()
+            , HttpStatus.CREATED);
 
-
+        } catch (DataAccessException exDt) {
+            return new ResponseEntity<>(
+                    MensajeResponse.builder()
+                            .mensaje(exDt.getMessage())
+                            .object(null)
+                            .build(),
+                    HttpStatus.METHOD_NOT_ALLOWED);
+        }
     }
 
     @PutMapping("/cliente")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ClienteDto update(@RequestBody ClienteDto ClienteDto){
-        Cliente clienteUpdate =  clienteService.save(ClienteDto);
-        return ClienteDto.builder()
-                .idCliente(clienteUpdate.getIdCliente())
-                .nombre(clienteUpdate.getNombre())
-                .apellido(clienteUpdate.getApellido())
-                .correo(clienteUpdate.getCorreo())
-                .fechaRegistro(clienteUpdate.getFechaRegistro())
-                .build();
+    public ResponseEntity<?>  update(@RequestBody ClienteDto ClienteDto){
+        Cliente clienteUpdate = null;
+
+        try {
+            clienteUpdate = clienteService.save(ClienteDto);
+            return new ResponseEntity<>( MensajeResponse.builder()
+                    .mensaje("Guardado Correctamente")
+                    .object(ClienteDto.builder()
+                            .idCliente(clienteUpdate.getIdCliente())
+                            .nombre(clienteUpdate.getNombre())
+                            .apellido(clienteUpdate.getApellido())
+                            .correo(clienteUpdate.getCorreo())
+                            .fechaRegistro(clienteUpdate.getFechaRegistro())
+                            .build())
+                    .build()
+                    , HttpStatus.CREATED);
+
+        } catch (DataAccessException exDt) {
+            return new ResponseEntity<>(
+                    MensajeResponse.builder()
+                            .mensaje(exDt.getMessage())
+                            .object(null)
+                            .build(),
+                    HttpStatus.METHOD_NOT_ALLOWED);
+        }
 
     }
 
     @DeleteMapping("/cliente/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id){
-        Map<String, Object> response = new HashMap<>();
         try {
             Cliente clienteDelete = clienteService.findById(id);
             clienteService.delete(clienteDelete);
             return new ResponseEntity<>(clienteDelete, HttpStatus.NO_CONTENT);
         } catch (DataAccessException exDt) {
-            // Manejo de excepciones
-            response.put("mensaje", exDt.getMessage());
-            response.put("cliente", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+
+            return new ResponseEntity<>(
+                    MensajeResponse.builder()
+                            .mensaje(exDt.getMessage())
+                            .object(null)
+                            .build(),
+                    HttpStatus.METHOD_NOT_ALLOWED);
         }
     }
 
     @GetMapping("/cliente/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public ClienteDto showById(@PathVariable Integer id){
+    public ResponseEntity<?>  showById(@PathVariable Integer id){
         Cliente cliente =  clienteService.findById(id);
-        return ClienteDto.builder()
-                .idCliente(cliente.getIdCliente())
-                .nombre(cliente.getNombre())
-                .apellido(cliente.getApellido())
-                .correo(cliente.getCorreo())
-                .fechaRegistro(cliente.getFechaRegistro())
-                .build();
+
+        if (cliente == null) {
+            return new ResponseEntity<>(
+                    MensajeResponse.builder()
+                            .mensaje("El registro que intenta buscar, no existe!!")
+                            .object(null)
+                            .build()
+                    , HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity<>(
+                MensajeResponse.builder()
+                        .mensaje("")
+                        .object(ClienteDto.builder()
+                                .idCliente(cliente.getIdCliente())
+                                .nombre(cliente.getNombre())
+                                .apellido(cliente.getApellido())
+                                .correo(cliente.getCorreo())
+                                .fechaRegistro(cliente.getFechaRegistro())
+                                .build())
+                        .build()
+                , HttpStatus.OK);
     }
 
 }
