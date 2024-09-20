@@ -3,7 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.model.dto.ClienteDto;
 import com.example.demo.model.entity.Cliente;
 import com.example.demo.model.payload.MensajeResponse;
-import com.example.demo.service.ICliente;
+import com.example.demo.service.IClienteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class clienteController {
 
     @Autowired
-    private ICliente clienteService;
+    private IClienteService clienteService;
 
     @PostMapping("/cliente")
     public ResponseEntity<?>  create(@RequestBody ClienteDto ClienteDto){
@@ -46,32 +46,37 @@ public class clienteController {
     }
 
     @PutMapping("/cliente")
-    public ResponseEntity<?>  update(@RequestBody ClienteDto ClienteDto){
+    public ResponseEntity<?>  update(@RequestBody ClienteDto ClienteDto, @PathVariable Integer id){
         Cliente clienteUpdate = null;
 
         try {
-            clienteUpdate = clienteService.save(ClienteDto);
-            return new ResponseEntity<>( MensajeResponse.builder()
-                    .mensaje("Guardado Correctamente")
-                    .object(ClienteDto.builder()
-                            .idCliente(clienteUpdate.getIdCliente())
-                            .nombre(clienteUpdate.getNombre())
-                            .apellido(clienteUpdate.getApellido())
-                            .correo(clienteUpdate.getCorreo())
-                            .fechaRegistro(clienteUpdate.getFechaRegistro())
-                            .build())
-                    .build()
-                    , HttpStatus.CREATED);
-
+            if (clienteService.existsById(id)) {
+                ClienteDto.setIdCliente(id);
+                clienteUpdate = clienteService.save(ClienteDto);
+                return new ResponseEntity<>( MensajeResponse.builder()
+                        .mensaje("Guardado Correctamente")
+                        .object(ClienteDto.builder()
+                                .idCliente(clienteUpdate.getIdCliente())
+                                .nombre(clienteUpdate.getNombre())
+                                .apellido(clienteUpdate.getApellido())
+                                .correo(clienteUpdate.getCorreo())
+                                .fechaRegistro(clienteUpdate.getFechaRegistro())
+                                .build())
+                        .build()
+                        , HttpStatus.CREATED);
+            }else {
+                return new ResponseEntity<>(
+                        MensajeResponse.builder()
+                                .mensaje("El registro que intenta actualizar no se encuentra en la base de datos")
+                                .object(null)
+                                .build(),
+                        HttpStatus.NOT_FOUND);
+            }
         } catch (DataAccessException exDt) {
-            return new ResponseEntity<>(
-                    MensajeResponse.builder()
-                            .mensaje(exDt.getMessage())
-                            .object(null)
-                            .build(),
-                    HttpStatus.METHOD_NOT_ALLOWED);
+
         }
 
+        return null;
     }
 
     @DeleteMapping("/cliente/{id}")
