@@ -3,7 +3,11 @@ package com.example.demo.service;
 import com.example.demo.model.dto.ClienteDto;
 import com.example.demo.model.entity.Cliente;
 
+import java.util.List;
+
 public interface IClienteService {
+
+    List<Cliente> listAll();
 
     Cliente save(ClienteDto cliente);
 
